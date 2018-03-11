@@ -1,5 +1,7 @@
 var app = (function () {
 
+    /* PRIVATE */
+    
     class Point{
         constructor(x,y){
             this.x=x;
@@ -28,48 +30,59 @@ var app = (function () {
     };
 
 
+    const TOPIC_ADDRESS = '/topic/newpoint';
+
     var connectAndSubscribe = function () {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
         
-        //subscribe to /topic/TOPICXX when connections succeed
+        //subscribe to TOPIC_ADDRESS when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/TOPICXX', function (eventbody) {
-                
-                
+            stompClient.subscribe(TOPIC_ADDRESS, function (eventbody) {
+                // console.log('Eventbody', eventbody);
+		var point = JSON.parse(eventbody.body);
+		console.log('Parsed JSON point:', point);
+		addPointToCanvas(point);
+		alert('Aviso', point);
             });
         });
 
     };
-    
-    
 
-    return {
+    /* PUBLIC */
 
-        init: function () {
-            var can = document.getElementById("canvas");
-            
-            //websocket connection
-            connectAndSubscribe();
-        },
+    var init = function () {
+        var can = document.getElementById("canvas");
+        
+        //websocket connection
+        connectAndSubscribe();
+    };
 
-        publishPoint: function(px,py){
-            var pt=new Point(px,py);
-            console.info("publishing point at "+pt);
-            addPointToCanvas(pt);
+    var publishPoint = function(px,py){
+        var pt=new Point(px,py);
+        console.info("publishing point at "+pt);
+        addPointToCanvas(pt);
 
-            //publicar el evento
-        },
+        //publicar el evento
+	stompClient.send(TOPIC_ADDRESS, {}, JSON.stringify(pt));
+    };
 
-        disconnect: function () {
-            if (stompClient !== null) {
-                stompClient.disconnect();
-            }
-            setConnected(false);
-            console.log("Disconnected");
+    var disconnect = function () {
+        if (stompClient !== null) {
+            stompClient.disconnect();
         }
+        setConnected(false);
+        console.log("Disconnected");
+    };
+
+    /* =============== */
+    
+    return {
+        init: init,
+        publishPoint: publishPoint,
+        disconnect: disconnect
     };
 
 })();
