@@ -29,7 +29,6 @@ var app = (function () {
         };
     };
 
-
     const TOPIC_ADDRESS = '/topic/newpoint';
 
     var connectAndSubscribe = function () {
@@ -45,7 +44,6 @@ var app = (function () {
 		var point = JSON.parse(eventbody.body);
 		console.log('Parsed JSON point:', point);
 		addPointToCanvas(point);
-		alert('Aviso', point);
             });
         });
 
@@ -56,16 +54,16 @@ var app = (function () {
     var init = function () {
         var can = document.getElementById("canvas");
         
-        //websocket connection
+        // websocket connection
         connectAndSubscribe();
     };
 
-    var publishPoint = function(px,py){
+    var publishPoint = function(px, py){
         var pt=new Point(px,py);
         console.info("publishing point at "+pt);
         addPointToCanvas(pt);
 
-        //publicar el evento
+        // publish the event
 	stompClient.send(TOPIC_ADDRESS, {}, JSON.stringify(pt));
     };
 
