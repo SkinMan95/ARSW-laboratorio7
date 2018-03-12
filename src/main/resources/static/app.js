@@ -30,8 +30,9 @@ var app = (function () {
     };
 
     const TOPIC_ADDRESS = '/topic/newpoint';
+    let connectionAddress = null;
 
-    var connectAndSubscribe = function () {
+    var connectAndSubscribe = function (sessionId) {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
@@ -39,7 +40,8 @@ var app = (function () {
         //subscribe to TOPIC_ADDRESS when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe(TOPIC_ADDRESS, function (eventbody) {
+	    connectionAddress = TOPIC_ADDRESS + '.' + sessionId;
+            stompClient.subscribe(connectionAddress, function (eventbody) {
                 // console.log('Eventbody', eventbody);
 		var point = JSON.parse(eventbody.body);
 		console.log('Parsed JSON point:', point);
@@ -51,20 +53,47 @@ var app = (function () {
 
     /* PUBLIC */
 
+    var sessionId = null;
+    
     var init = function () {
         var can = document.getElementById("canvas");
-        
-        // websocket connection
-        connectAndSubscribe();
+
+	$('#sendPointBtn').prop('disabled', true);
+	
+	$('#connectBtn').click(function () {
+	    sessionId = Number($('#sessionIdentifier').val());
+	    if (isNaN(sessionId)) {
+		sessionId = null;
+	    } else {
+		// websocket connection
+		connectAndSubscribe(sessionId);
+		$('#sendPointBtn').prop('disabled', false);
+
+		$('#connectBtn').prop('disabled', true);
+	    }
+	});
+	
+	$('#sendPointBtn').click(function () {
+	    var x = $('#x').val();
+	    var y = $('#y').val();
+	    if (sessionId != null) {
+		publishPoint(x, y);
+	    }
+	});
     };
 
     var publishPoint = function(px, py){
-        var pt=new Point(px,py);
+	if (sessionId == null) {
+	    alert('No se ha establecido el numero de sesion');
+	    return;
+	}
+	
+        var pt = new Point(px,py);
         console.info("publishing point at "+pt);
         addPointToCanvas(pt);
 
         // publish the event
-	stompClient.send(TOPIC_ADDRESS, {}, JSON.stringify(pt));
+	stompClient.send(connectionAddress, {}, JSON.stringify(pt));
     };
 
     var disconnect = function () {
