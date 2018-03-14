@@ -2,12 +2,20 @@ var app = (function () {
 
     /* PRIVATE */
     
-    class Point{
+    class Point {
         constructor(x,y){
             this.x=x;
             this.y=y;
         }        
     }
+
+    class Polygon {
+	constructor(points) {
+	    this.points = points;
+	}
+    }
+
+    const POLYGON_FILL_COLOR = '#f00';
     
     var stompClient = null;
 
@@ -17,6 +25,26 @@ var app = (function () {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
         ctx.stroke();
+    };
+
+    var addPolygonToCanvas = function (polygon) {        
+        var canvas = document.getElementById("canvas");
+	var c2 = canvas.getContext('2d');
+	c2.fillStyle = POLYGON_FILL_COLOR;
+	
+	let points = polygon.points;
+
+	c2.beginPath();
+	c2.moveTo(points[0].x, points[0].y);
+
+	let i = 1;
+        while(i < points.length) {
+	    c2.lineTo(points[i].x, points[i].y);
+	    ++i;
+	}
+
+	c2.closePath();
+	c2.fill();
     };
     
     
@@ -29,9 +57,11 @@ var app = (function () {
         };
     };
 
-    const TOPIC_ADDRESS = '/topic/newpoint';
+    const TOPIC_POINT_ADDRESS = '/topic/newpoint';
+    const TOPIC_POLYGON_ADDRESS = '/topic/newpolygon';
     const PUBLISH_ADDRESS = '/app/newpoint';
-    let connectionAddress = null;
+    let pointConnectionAddress = null;
+    let polygonConnectionAddress = null;
     let publishAddress = null;
 
     var connectAndSubscribe = function (sessionId) {
@@ -39,18 +69,26 @@ var app = (function () {
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
         
-        //subscribe to TOPIC_ADDRESS when connections succeed
+        //subscribe to TOPIC_POINT_ADDRESS when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
 
-	    connectionAddress = TOPIC_ADDRESS + '.' + sessionId;
+	    pointConnectionAddress = TOPIC_POINT_ADDRESS + '.' + sessionId;
+	    polygonConnectionAddress = TOPIC_POLYGON_ADDRESS + '.' + sessionId;
 	    publishAddress = PUBLISH_ADDRESS + '.' + sessionId;
 
-            stompClient.subscribe(connectionAddress, function (eventbody) {
+            stompClient.subscribe(pointConnectionAddress, function (eventbody) {
                 // console.log('Eventbody', eventbody);
 		var point = JSON.parse(eventbody.body);
 		console.log('Parsed JSON point:', point);
 		addPointToCanvas(point);
+            });
+
+	    stompClient.subscribe(polygonConnectionAddress, function (eventbody) {
+                // console.log('Eventbody', eventbody);
+		var polygon = JSON.parse(eventbody.body);
+		console.log('Parsed JSON polygon:', polygon);
+		addPolygonToCanvas(polygon);
             });
         });
 
