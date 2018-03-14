@@ -30,7 +30,9 @@ var app = (function () {
     };
 
     const TOPIC_ADDRESS = '/topic/newpoint';
+    const PUBLISH_ADDRESS = '/app/newpoint';
     let connectionAddress = null;
+    let publishAddress = null;
 
     var connectAndSubscribe = function (sessionId) {
         console.info('Connecting to WS...');
@@ -40,7 +42,10 @@ var app = (function () {
         //subscribe to TOPIC_ADDRESS when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
+
 	    connectionAddress = TOPIC_ADDRESS + '.' + sessionId;
+	    publishAddress = PUBLISH_ADDRESS + '.' + sessionId;
+
             stompClient.subscribe(connectionAddress, function (eventbody) {
                 // console.log('Eventbody', eventbody);
 		var point = JSON.parse(eventbody.body);
@@ -88,12 +93,13 @@ var app = (function () {
 	    return;
 	}
 	
-        var pt = new Point(px,py);
-        console.info("publishing point at "+pt);
+        var pt = new Point(px, py);
+        console.info("publishing point at " + pt);
         addPointToCanvas(pt);
 
         // publish the event
-	stompClient.send(connectionAddress, {}, JSON.stringify(pt));
+	console.log(publishAddress);
+	stompClient.send(publishAddress, {}, JSON.stringify(pt));
     };
 
     var disconnect = function () {

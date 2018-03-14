@@ -63,7 +63,19 @@
             <artifactId>jquery</artifactId>
             <version>3.1.0</version>
         </dependency>                
-                                                                
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-net</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.2.Final</version>
+        </dependency>                                
     </dependencies>
 
     <build>
