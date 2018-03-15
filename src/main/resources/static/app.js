@@ -123,6 +123,13 @@ var app = (function () {
 		publishPoint(x, y);
 	    }
 	});
+
+	$('#canvas').click(function (event) {
+	    let canvasPoint = getMousePosition(event);
+	    if (sessionId != null) {
+		publishPoint(canvasPoint.x, canvasPoint.y);
+	    }
+	});
     };
 
     var publishPoint = function(px, py){
