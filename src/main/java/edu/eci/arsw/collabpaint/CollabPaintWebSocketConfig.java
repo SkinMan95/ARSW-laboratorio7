@@ -39,10 +39,26 @@ public class CollabPaintWebSocketConfig extends AbstractWebSocketMessageBrokerCo
     @Value("${relayHostPort}")
     int relayHostPort;
     
+    @Value("${rmqUsername}")
+    String username;
+    
+    @Value("${rmqPasscode}")
+    String passcode;
+    
+    @Value("${rmqVirtualHost}")
+    String virtualhost;
+    
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         System.out.println(relayHostURL + " " + relayHostPort);
-        config.enableStompBrokerRelay("/topic").setRelayHost(relayHostURL).setRelayPort(relayHostPort);
+        config.enableStompBrokerRelay("/topic")
+                .setRelayHost(relayHostURL)
+                .setRelayPort(relayHostPort)
+                .setClientLogin(username)
+                .setClientPasscode(passcode)
+                .setSystemLogin(username)
+                .setSystemPasscode(passcode)
+                .setVirtualHost(virtualhost);
         config.setApplicationDestinationPrefixes("/app");
     }
 

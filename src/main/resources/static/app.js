@@ -70,7 +70,7 @@ var app = (function () {
         stompClient = Stomp.over(socket);
         
         //subscribe to TOPIC_POINT_ADDRESS when connections succeed
-        stompClient.connect({}, function (frame) {
+        stompClient.connect("cueoktuy", "bDfbrXvZHgv4ris-xKGyGImHXocI2cg4" , function (frame) {
             console.log('Connected: ' + frame);
 
 	    pointConnectionAddress = TOPIC_POINT_ADDRESS + '.' + sessionId;
