@@ -9,7 +9,8 @@ import java.util.ResourceBundle;
  * Created by vino on 16/8/20.
  */
 public class JedisUtil {
-    private  static JedisPool pool;
+
+    private static JedisPool pool;
 
     static {
         ResourceBundle bundle = ResourceBundle.getBundle("jedis");
@@ -28,10 +29,13 @@ public class JedisUtil {
                 Integer.valueOf(bundle.getString("redis.port")));
     }
 
-    public static JedisPool getPool(){
+    public static JedisPool getPool() {
         return pool;
     }
-    public static void closePool(){
-        if(!pool.isClosed()) pool.destroy();
+
+    public static void closePool() {
+        if (!pool.isClosed()) {
+            pool.destroy();
+        }
     }
 }
