@@ -29,12 +29,9 @@ public class STOMPMessagesHandler {
     @Autowired
     SimpMessagingTemplate msgt;
 
-    private Map<String, Queue<Point>> pointQueuesMap = new ConcurrentHashMap<>();
-
     @MessageMapping("newpoint.{drawnum}")
     public void handlePointEvent(Point pt, @DestinationVariable String drawnum) throws Exception {
         System.out.println("New point received!: " + pt);
-        pointQueuesMap.putIfAbsent(drawnum, new ConcurrentLinkedQueue<>());
 
         /* REDIS TRANSACTION*/
         String xList = "x" + drawnum;
@@ -70,28 +67,26 @@ public class STOMPMessagesHandler {
         if (((ArrayList) luares.get()).size() == 2) {
             System.out.println("RESPUESTA: " + new String((byte[]) ((ArrayList) (((ArrayList) luares.get()).get(0))).get(0)));
         }
-        
+
         System.out.println("SZ: " + ((ArrayList) luares.get()).size());
 
-        if (!res.isEmpty()) { // Successful transaction
+        if (!res.isEmpty()) { // Transaction successfull
             msgt.convertAndSend("/topic/newpoint." + drawnum, pt);
+        }
 
-            Queue<Point> queue = pointQueuesMap.get(drawnum);
-            queue.add(pt);
+        if (!res.isEmpty() && ((List) luares.get()).size() == 2) { // Checking if polygon should be added
+            List<Object> xs = (List) (((List) luares.get()).get(0));
+            List<Object> ys = (List) (((List) luares.get()).get(1));
 
-            if (queue.size() >= 4) {
-                List<Point> points = new ArrayList<>();
-                synchronized (queue) {
-                    while (!queue.isEmpty()) {
-                        points.add(queue.remove());
-                    }
-                }
-
-                Polygon pol = new Polygon(points);
-                msgt.convertAndSend("/topic/newpolygon." + drawnum, pol);
-                System.out.println("Published new polygon with points: " + points);
+            List<Point> points = new ArrayList<>();
+            assert xs.size() == ys.size();
+            for (int i = 0; i < xs.size(); i++) {
+                points.add(new Point(Integer.parseInt(new String((byte[]) xs.get(i))),
+                        Integer.parseInt(new String((byte[]) ys.get(i)))));
             }
-
+            Polygon pol = new Polygon(points);
+            msgt.convertAndSend("/topic/newpolygon." + drawnum, pol);
+            System.out.println("Published new polygon with points: " + points);
         }
 
         jedis.close();
