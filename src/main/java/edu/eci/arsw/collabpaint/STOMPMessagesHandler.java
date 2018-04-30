@@ -15,6 +15,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 import util.JedisUtil;
 
@@ -35,23 +36,42 @@ public class STOMPMessagesHandler {
         System.out.println("New point received!: " + pt);
         pointQueuesMap.putIfAbsent(drawnum, new ConcurrentLinkedQueue<>());
 
-        
         /* REDIS TRANSACTION*/
         String xList = "x" + drawnum;
         String yList = "y" + drawnum;
 
+        String luaScript = "local xval,yval; \n"
+                + "if (redis.call('LLEN','" + xList + "')>=4) then \n"
+                + "    xval=redis.call('LRANGE','" + xList + "',0,-1);\n"
+                + "    yval=redis.call('LRANGE','" + yList + "',0,-1);\n"
+                + "    redis.call('DEL','" + xList + "');\n"
+                + "    redis.call('DEL','" + yList + "');\n"
+                + "    return {xval,yval};\n"
+                + "else\n"
+                + "    return {};\n"
+                + "end";
+
         Jedis jedis = JedisUtil.getPool().getResource();
+        jedis.getClient().setTimeoutInfinite();
 
         jedis.watch(xList, yList);
 
         Transaction t = jedis.multi();
-        t.set(xList, "" + pt.getX());
-        t.set(yList, "" + pt.getY());
+        t.rpush(xList, "" + pt.getX());
+        t.rpush(yList, "" + pt.getY());
+
+        Response<Object> luares = t.eval(luaScript.getBytes(), 0, "0".getBytes());
 
         List<Object> res = t.exec();
         /* END TRANSACTION*/
 
         System.out.println("Res: " + res);
+
+        if (((ArrayList) luares.get()).size() == 2) {
+            System.out.println("RESPUESTA: " + new String((byte[]) ((ArrayList) (((ArrayList) luares.get()).get(0))).get(0)));
+        }
+        
+        System.out.println("SZ: " + ((ArrayList) luares.get()).size());
 
         if (!res.isEmpty()) { // Successful transaction
             msgt.convertAndSend("/topic/newpoint." + drawnum, pt);
