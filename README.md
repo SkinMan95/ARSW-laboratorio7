@@ -8,7 +8,7 @@ En este ejercicio se va a retomar la aplicación del 'ahorcado en línea':
 
 Como se observó en el ejercicio anterior, esta aplicación tiene el defecto de guardar datos provisionales (el estado de los 'ahorcados') en un mapa dentro de la memoria del servidor, lo cual crea inconsistencias cuando varias instancias de la misma son montadas bajo un esquema de balanceo de carga.
 
-## Parte I
+## Parte I (NO SE REALIZA POR HACERSE CON COLLABPAINT)
 
 1. Inicie una de las máquina virtuales Ubuntu trabajada anteriormente, e <!--instale el servidor REDIS [siguiendo estas instrucciones](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-redis), sólo hasta 'sudo make install'. Con esto, puede --> inicie el servidor con 'redis-server'. Nota: para poder hacer 'copy/paste' en la terminal (la de virtualbox no lo permite), haga una conexión ssh desde la máquina real hacia la virtual.
         
@@ -102,7 +102,9 @@ Una vez hecho esto, en la aplicación ajustar el archivo jedis.properties, poner
 
 ## Parte II 
 
-Revise: dentro de la implementación hecha (en la clase RedisHangmanGame), se pueden presentar condiciones de carrera. Por qué y cual es la región crítica?.
+Revise: dentro de la implementación hecha (en la clase ~~RedisHangmanGame~~ STOMPMessagesHandler), se pueden presentar condiciones de carrera. Por qué y cual es la región crítica?.
+
+**RTA:** Se puede presentar una condicion de carrera si la ejecucion de las instrucciones de Redis se realiza de forma *no-transaccional*, es decir, que un conjunto de instrucciones no se traten como una instruccion individual sino como varias acciones, cada una independiente de la anterior, y donde no existe garantia de los tiempos de ejecucion de cada una y donde ademas el orden de los comandos no se es garantizado.
 
 Para resolver lo anterior, revise [el ejemplo de la sección 9 de este artículo](https://www.javacodegeeks.com/2015/09/spring-data-and-redis.html) cómo implementar un esquema de bloqueo 'optimista' haciendo uso de WATCH y cómo crear transacciones con MULTI. Sin embargo, tenga presente que NO ES POSIBLE ejecutar la lógica hecha en Java (la que analiza qué si hay letras para destapar o no) dentro de la misma. 
 
